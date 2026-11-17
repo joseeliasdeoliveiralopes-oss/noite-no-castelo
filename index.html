@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-sw85yikcONoUKk4x+HZxxDZFiy1S1fRc5iVLQ6lHTVE='; style-src 'sha256-qaCethuuC/B/M87Firj2JJiqlqitVpMfUst+Et+LX0Q='; img-src data:; font-src data:; connect-src 'none'; media-src 'none'; frame-src 'none'; object-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-XKOAGgxWjdl60DSX3xyx45eVRMpWa8UziTko8O+cS2E='; style-src 'sha256-qaCethuuC/B/M87Firj2JJiqlqitVpMfUst+Et+LX0Q='; img-src data:; font-src data:; connect-src 'none'; media-src 'none'; frame-src 'none'; object-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="color-scheme" content="dark">
 <meta name="description" content="Noite no Castelo: jogo de plataforma 2D em pixel art, gratuito, sem coleta de dados.">
@@ -2804,7 +2804,7 @@ const Dad = {
       return { r: c, l };
     };
     this.img = { idle: mk(DAD_LEGS.a), walkA: mk(DAD_LEGS.b), walkB: mk(DAD_LEGS.c) };
-    this.buildVillain();
+    this.buildVillain(); this.buildBosses();
   },
   reset() { this.e = null; this.lock = false; },
   gain(n) { const S = Inv.S; if (!S || this.e) return; const was = S.sp >= 100; S.sp = Math.min(100, (S.sp || 0) + n); if (!was && S.sp >= 100) { Snd.sfx('pickup'); G.msg = 'ESPECIAL PRONTO! (F)'; G.msgT = 90; announce('Especial pronto. Aperte F para chamar o pai.'); } },
@@ -2975,7 +2975,7 @@ const Talk = {
   },
   draw(g) {
     if (!this.on) return;
-    const L = this.lines[this.i], shown = L.text.toUpperCase().slice(0, Math.floor(this.t * 0.6)), her = L.who !== 'ELIAS';
+    const L = this.lines[this.i], shown = L.text.toUpperCase().slice(0, Math.floor(this.t * 0.6)), her = L.who !== 'ZEZINHO';
     g.fillStyle = 'rgba(5,3,10,0.88)'; g.fillRect(6, 120, VW - 12, 54); g.fillStyle = '#c9a227'; g.fillRect(6, 120, VW - 12, 1); g.fillRect(6, 173, VW - 12, 1); g.fillRect(6, 120, 1, 54); g.fillRect(VW - 7, 120, 1, 54);
     const px = 12, py = 126;
     g.fillStyle = '#0b0806'; g.fillRect(px, py, 42, 42); g.fillStyle = her ? '#ffd60a' : '#a77fd0'; g.fillRect(px + 1, py + 1, 40, 40);
@@ -3039,15 +3039,64 @@ Dad.buildVillain = function () {
   const l = flip(c); this.villain = { w: W, h: H, r: c, l, hit: white(c), hitL: white(l) };
 };
 function drawVillain(g, b, cx, cy) {
-  const V = Dad.villain, x = Math.round(b.x + b.w / 2 - V.w / 2 - cx), y = Math.round(b.y + b.h - V.h + 1 - cy), flip = b.dir > 0;
+  const V = (Dad.bossArt && Dad.bossArt[b.bt]) || Dad.villain, x = Math.round(b.x + b.w / 2 - V.w / 2 - cx), y = Math.round(b.y + b.h - V.h + 1 - cy), flip = b.dir > 0;
   g.globalAlpha = clamp(b.fade, 0.05, 1); if (b.state === 'intro' && !b.active) g.globalAlpha = 1;
   const hit = b.flash > 0 && (b.flash & 2), im = hit ? (flip ? V.hitL : V.hit) : (flip ? V.l : V.r);
-  if (b.state === 'die') { // freed: the crown is gone and a warm light surrounds him
+  if (b.state === 'die' && b.bt === 'rei') { // freed: the crown is gone and a warm light surrounds him
     glow(g, x + V.w / 2, y + 22, 30, '255,120,150', 0.14);
     g.drawImage(im, 0, 4, V.w, V.h - 4, x, y + 4, V.w, V.h - 4);
   } else g.drawImage(im, x, y);
   g.globalAlpha = 1;
 }
+
+/* ===== BOSS LOOKS: O Conde (vampire lord) and O Ceifador (reaper) get their own sprites ===== */
+const CONDE_PAL = { K: '#111018', k: '#2a2840', s: '#ddd6e6', S: '#a99cbc', e: '#ff2a3a', f: '#ffffff', m: '#5a1020', C: '#140c1c', c: '#8a0f20', r: '#e8334a', B: '#1c1a2a', b: '#3a3450', w: '#ece8f4', g: '#e3b73b', P: '#16141e', p: '#2a2734', o: '#0a0a0e' };
+const CONDE_ROWS = ['......KKKKKK........', '.....KKkKKKKK.......', '....KKKKKKKKKK......', '....KKsssssKKK......', '....Ksssssssss......', '...ssesseesss.......', '....ssSssssss.......', '.....ssmfmsss.......', '......sssssS........', '..ccc..sssS..ccc....', '..cCCCwwwwwCCCc.....', '.cCCBBwrrwBBCCCc....', '.cCBBBwgwwBBBCCc....', 'cCCBBbBBBBBbBCCCc...', 'cCBBBbBBBBBbBBCCc...', 'cCsBBbBBBBBbBBsCc...', 'cCCBBBBBBBBBBBCCc...', 'cCCBBBBggBBBBBCCc...', 'cCCPPPPPPPPPPPCCc...', 'cCCPPPPPPPPPPPCCc...', 'cCCPPPPP.PPPPPCCc...', 'cCCPPPPP.PPPPPCCc...', 'cCCPPpPP.PPpPPCCc...', 'cCCPPPPP.PPPPPCCc...', 'cCCPPPPP.PPPPPCCc...', 'cCCPPPPP.PPPPPCCc...', 'cCCPPPPP.PPPPPCCc...', 'cCCPPPPP.PPPPPCCc...', 'cCCPPPPP.PPPPPCCCc..', 'CCCPPPPP.PPPPPCCCc..', 'CCCPPPPP.PPPPPCCCC..', 'CCCoooo...ooooCCCC..', 'CCooooo..oooooCCCC..', '.CCC.........CCCC...'];
+const REAPER_PAL = { s: '#c9d2e6', S: '#ffffff', w: '#5b3a1a', W: '#8a5a2b', h: '#0c0e16', r: '#1b2030', u: '#e8e2cf', U: '#a89f86', e: '#7fe7ff', R: '#1c2232', g: '#7fe7ff' };
+const REAPER_ROWS = ['....sssssssss...w...', '..sSsssssssssss.w...', '.sS.........ssssw...', '.S...hhhhhh.....w...', '....hhhhhhhh....w...', '...hhhrrrrhhh...w...', '...hhuuuuuuhh...w...', '...hhueUueUhh...W...', '...hhuuuuuuhh...w...', '...hhuUuUuUhh.uuw...', '...hhhuuuuhhh.uuw...', '..RRRhhhhhhRRRRuw...', '.RRRRRRRRRRRRRR.w...', '.RRrRRRRRRRRrRR.w...', '.RRrRRRRRRRRrRR.w...', 'RRRrRRRRRRRRrRRRw...', 'RRRrRRRRRRRRrRRRw...', 'RRRRRRRRRRRRRRRRw...', 'RRRRRRRRRRRRRRRRw...', 'RRRrRRRRRRRRRrRRw...', 'RRRrRRRRRRRRRrRRw...', 'RRRrRRRRRRRRRrRRw...', 'RRRRRRRRRRRRRRRRw...', 'RRRRRRRRRRRRRRRRw...', 'RRRrRRRRRRRRRrRRw...', 'RRRrRRRRRRRRRrRRw...', 'RRRRRRRRRRRRRRRRw...', 'RRRRRRRRRRRRRRRRw...', '.RRrRRRRRRRRRrR.w...', '.RRRRgRRRRgRRRR.w...', '..RR.RRgRRRR.RR.w...', '..g..RR..RgR..g.w...', '...g..g...g..g..w...', '......g......g..w...'];
+Dad.makeSprite = function (rows, pal) {
+  const W = 20, H = rows.length + 2, c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
+  rows.forEach((r, y) => { for (let x = 0; x < r.length; x++) { const ch = r[x]; if (ch !== '.' && pal[ch]) { g.fillStyle = pal[ch]; g.fillRect(x + 1, y + 1, 1, 1); } } });
+  const d = g.getImageData(0, 0, W, H), o = g.createImageData(W, H), has = (x, y) => x >= 0 && y >= 0 && x < W && y < H && d.data[(y * W + x) * 4 + 3] > 0;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = (y * W + x) * 4; if (has(x, y)) for (let k = 0; k < 4; k++) o.data[i + k] = d.data[i + k]; else if (has(x - 1, y) || has(x + 1, y) || has(x, y - 1) || has(x, y + 1)) { o.data[i] = 5; o.data[i + 1] = 3; o.data[i + 2] = 10; o.data[i + 3] = 255; } }
+  g.putImageData(o, 0, 0);
+  const flip = src => { const f = document.createElement('canvas'); f.width = W; f.height = H; const fg = f.getContext('2d'); fg.translate(W, 0); fg.scale(-1, 1); fg.drawImage(src, 0, 0); return f; };
+  const white = src => { const f = document.createElement('canvas'); f.width = W; f.height = H; const fg = f.getContext('2d'); fg.drawImage(src, 0, 0); fg.globalCompositeOperation = 'source-atop'; fg.fillStyle = '#ffffff'; fg.fillRect(0, 0, W, H); return f; };
+  const l = flip(c); return { w: W, h: H, r: c, l, hit: white(c), hitL: white(l) };
+};
+Dad.buildBosses = function () { this.bossArt = { conde: this.makeSprite(CONDE_ROWS, CONDE_PAL), ceifador: this.makeSprite(REAPER_ROWS, REAPER_PAL), rei: this.villain }; };
+
+/* ===== VISIBLE GEAR: what Livia wears and carries is drawn on her ===== */
+Dad.drawGear = function (g, x, y, d, back, P) {
+  const E = Inv.S.eq, px = (c, w) => d > 0 ? x + c : x + 16 - c - (w || 1);
+  const R = (c, r, w, h, col) => { g.fillStyle = col; g.fillRect(px(c, w), y + r, w, h); };
+  const main = ITEMS[E.main], fam = main ? main.fam : 'fists', M = MET[main ? main.look : 'steel'] || MET.steel;
+  if (back) { // carried behind the body
+    if (!P.atk) {
+      if (fam === 'sword' || fam === 'great' || fam === 'rapier') { g.fillStyle = M.body; pxLine(g, px(3), y + 22, px(11), y + 6, fam === 'great' ? 2 : 1); g.fillStyle = M.guard; R(3, 19, 3, 1, M.guard); }
+      else if (fam === 'axe') { g.fillStyle = M.hilt; pxLine(g, px(3), y + 21, px(10), y + 8, 1); R(9, 6, 4, 4, M.body); }
+      else if (fam === 'spear' || fam === 'halberd' || fam === 'staff') { g.fillStyle = M.hilt; pxLine(g, px(4), y + 23, px(9), y - 4, 1); R(8, -6, 2, 3, fam === 'staff' ? M.trail : M.edge); if (fam === 'halberd') R(9, -3, 3, 3, M.body); }
+    }
+    if ((E.acc1 && ITEMS[E.acc1].shield) || (E.acc2 && ITEMS[E.acc2].shield)) { R(1, 12, 5, 7, '#7f889c'); R(1, 12, 5, 1, '#d7dbe6'); R(3, 13, 1, 5, '#c9a227'); R(2, 15, 3, 1, '#c9a227'); }
+    return;
+  }
+  const head = E.head, body = E.body;
+  if (head === 'h_hood') { R(4, 0, 8, 3, '#8a5a2b'); R(3, 2, 2, 8, '#6b4422'); R(11, 2, 2, 6, '#6b4422'); R(5, 0, 5, 1, '#c58a4e'); }
+  else if (head === 'h_helm') { R(4, -1, 8, 4, '#7f889c'); R(5, -1, 6, 1, '#d7dbe6'); R(3, 2, 10, 1, '#5b6274'); R(10, 3, 1, 4, '#7f889c'); R(7, -3, 2, 2, '#c4182e'); }
+  else if (head === 'h_crown') { R(5, -2, 7, 2, '#e3b73b'); R(5, -4, 1, 2, '#e3b73b'); R(8, -5, 1, 3, '#ffd24a'); R(11, -4, 1, 2, '#e3b73b'); R(8, -1, 1, 1, '#4fc8e8'); }
+  if (body === 'b_chain') { for (let r = 13; r < 18; r++) for (let c = 5 + (r & 1); c < 11; c += 2) R(c, r, 1, 1, '#a7b2c9'); }
+  else if (body === 'b_plate') { R(5, 13, 6, 5, '#a7b2c9'); R(5, 13, 6, 1, '#f2f6ff'); R(4, 13, 2, 2, '#d7dbe6'); R(10, 13, 2, 2, '#d7dbe6'); R(7, 15, 2, 1, '#c9a227'); }
+  const acc = [E.acc1, E.acc2];
+  if (acc.includes('a_vit')) R(8, 13, 1, 2, '#e8334a');
+  if (acc.includes('a_luck')) R(7, 13, 2, 2, '#fff2b0');
+  if (acc.includes('a_boots')) { R(2, 21, 2, 1, '#f4eee0'); R(1, 20, 2, 1, '#f4eee0'); }
+  if (acc.includes('a_str') || acc.includes('a_arc')) R(12, 16, 1, 1, acc.includes('a_str') ? '#ffd24a' : '#7fe7ff');
+  if (!P.atk) {
+    if (fam === 'whip') { R(9, 17, 3, 3, M.body); R(10, 18, 1, 1, '#05030a'); }
+    else if (fam === 'dagger') { R(10, 17, 1, 4, M.body); R(10, 16, 1, 1, M.hilt); }
+    else if (fam === 'fists' && main && main.look === 'iron') { R(11, 15, 3, 3, '#aab3c6'); }
+  }
+};
 
 /* ===== ENTITIES: physics, player, enemies, items, boss ===== */
 const G = {
@@ -3182,8 +3231,11 @@ function drawPlayer(g, cx, cy) {
   else if (Math.abs(P.vx) > 0.15) k = ['runA', 'runB', 'runC', 'runB'][Math.floor(P.anim) & 3];
   if (blink) return;
   if (Inv.S.buff > 0 && !P.dead) { g.globalAlpha = 0.25; glow(g, P.x + 5 - cx, P.y + 12 - cy, 16, '255,120,40', 0.5); g.globalAlpha = 1; }
-  const fr = set[k], im = (A ? A.d : P.dir) > 0 ? fr.r : fr.l;
-  g.drawImage(im, Math.round(P.x - 3 - cx + ox), Math.round(P.y - 2 - cy + oy));
+  const fr = set[k], fd = (A ? A.d : P.dir), im = fd > 0 ? fr.r : fr.l, sx = Math.round(P.x - 3 - cx + ox), sy = Math.round(P.y - 2 - cy + oy);
+  const gear = !P.dead && k !== 'hurt';
+  if (gear) Dad.drawGear(g, sx, sy, fd, true, P);
+  g.drawImage(im, sx, sy);
+  if (gear) Dad.drawGear(g, sx, sy, fd, false, P);
   if (A) Combat.drawWeapon(g, cx - ox, cy - oy, P, A);
 }
 
@@ -3291,15 +3343,27 @@ function updateEnemy(e) {
     else { e.vy = Math.min(e.vy + 0.3, 5); const h = moveY(e, e.vy); if (h === 1) { e.vy = 0; e.onGround = true; } }
     return;
   }
+  /* each enemy has a telegraphed special attack: e.warn counts the wind-up (drawn as a red "!") */
+  if (e.warn > 0) e.warn--;
   if (e.type === 'zombie') {
     if (!onScreen && e.state === 0) return;
-    e.state = 1; e.vy = Math.min(e.vy + 0.3, 5);
+    if (e.state === 0) e.state = 1;
+    e.vy = Math.min(e.vy + 0.3, 5);
     const h = moveY(e, e.vy); if (h === 1) { e.vy = 0; e.onGround = true; }
-    if (e.onGround) {
+    if (e.cd > 0) e.cd--;
+    if (e.state === 2) { // wind-up before the lunge
+      if (e.warn === 0) { e.state = 3; e.lt = 16; Snd.sfx('swingH'); }
+    } else if (e.state === 3) { // lunge
+      const wall = moveX(e, e.dir * 2.7); e.lt--; if (e.t % 3 === 0) Parts.add(e.x + 5, e.y + 16, -e.dir * 0.5, -0.3, 10, '#7d9a78', 1, 0.05);
+      if (wall || e.lt <= 0 || !groundAhead(e, e.dir)) { e.state = 1; e.cd = 120 + rint(0, 40); }
+    } else if (e.onGround) {
       if (Math.abs(dx) < 150 && Math.abs(dy) < 50) e.dir = dx > 0 ? 1 : -1;
-      const sp = 0.32 + (Math.abs(dx) < 70 ? 0.1 : 0);
-      const wall = moveX(e, e.dir * sp);
-      if (wall || !groundAhead(e, e.dir)) { e.x -= e.dir * sp; e.dir *= -1; }
+      if (Math.abs(dx) < 56 && Math.abs(dy) < 24 && e.cd === 0) { e.state = 2; e.warn = 26; }
+      else {
+        const sp = 0.32 + (Math.abs(dx) < 70 ? 0.1 : 0);
+        const wall = moveX(e, e.dir * sp);
+        if (wall || !groundAhead(e, e.dir)) { e.x -= e.dir * sp; e.dir *= -1; }
+      }
     }
   } else if (e.type === 'skeleton') {
     if (!onScreen && e.state === 0) return;
@@ -3308,25 +3372,44 @@ function updateEnemy(e) {
     if (e.cd > 0) e.cd--;
     const near = Math.abs(dx) < 120 && Math.abs(dy) < 42;
     if (near) e.dir = dx > 0 ? 1 : -1;
-    if (e.throwT > 0) { e.throwT--; }
+    if (e.swing > 0) { // bone club swing: active window in front of it
+      e.swing--;
+      if (e.swing < 8 && e.swing > 2 && !P.dead && overlap(P, { x: e.dir > 0 ? e.x + e.w : e.x - 16, y: e.y + 2, w: 16, h: 14 })) hurtPlayer(e.x + e.w / 2, 22);
+    } else if (e.throwT > 0) { e.throwT--; }
+    else if (near && Math.abs(dx) < 30 && e.cd < 60 && e.warn === 0 && !e.meleeCd) { e.warn = 14; e.swing = 26; e.meleeCd = 90; Snd.sfx('swing'); }
     else if (near && e.cd === 0) {
-      e.throwT = 22; e.cd = 120 + rint(0, 40);
-      G.ents.push({ kind: 'bone', x: e.x + 1, y: e.y + 2, w: 8, h: 8, vx: e.dir * 1.5, vy: -3.2, t: 0 });
+      e.throwT = 22; e.cd = 120 + rint(0, 40); e.volley = (e.volley || 0) + 1;
+      const fan = e.volley % 3 === 0 ? [1.0, 1.6, 2.2] : [1.5];   // every third throw is a fan of three bones
+      fan.forEach((v, i) => G.ents.push({ kind: 'bone', x: e.x + 1, y: e.y + 2, w: 8, h: 8, vx: e.dir * v, vy: -3.2 - i * 0.4, t: 0 }));
       Snd.sfx('throw');
     } else if (e.onGround) {
       const sp = near ? 0.2 : 0.42;
       const wall = moveX(e, e.dir * sp);
       if (wall || !groundAhead(e, e.dir)) { e.x -= e.dir * sp; e.dir *= -1; }
     }
+    if (e.meleeCd > 0) e.meleeCd--;
   } else if (e.type === 'bat') {
     if (e.state === 0) { e.y = e.base + Math.sin(e.t * 0.08) * 2; if (Math.abs(dx) < 125 && onScreen) { e.state = 1; e.dir = dx > 0 ? 1 : -1; e.t = 0; } return; }
-    e.x += e.dir * 1.05;
-    const targetY = P.y + 4 + Math.sin(e.t * 0.14) * 22;
-    e.y += clamp((targetY - e.y) * 0.04, -1.1, 1.1);
-    if (e.t > 420 || e.x < G.cam.x - 80 || e.x > G.cam.x + VW + 80) { if (e.t > 120) e.dead = true; }
+    if (e.state === 2) { // dive straight at her
+      e.x += e.dvx; e.y += e.dvy; if (e.t > e.diveEnd) { e.state = 1; e.cd = 100; }
+    } else {
+      e.x += e.dir * 1.05;
+      const targetY = P.y - 18 + Math.sin(e.t * 0.14) * 10;
+      e.y += clamp((targetY - e.y) * 0.04, -1.1, 1.1);
+      if (e.cd > 0) e.cd--;
+      if (e.cd === 0 && Math.abs(dx) < 70 && dy > 6 && e.warn === 0) { e.warn = 18; e.cd = -1; Snd.sfx('select'); }
+      if (e.cd === -1 && e.warn === 0) { const ang = Math.atan2((P.y + 10) - (e.y + 4), dx); e.dvx = Math.cos(ang) * 2.8; e.dvy = Math.sin(ang) * 2.8; e.dir = e.dvx > 0 ? 1 : -1; e.state = 2; e.diveEnd = e.t + 30; }
+    }
+    if (e.t > 600 || e.x < G.cam.x - 80 || e.x > G.cam.x + VW + 80) { if (e.t > 120) e.dead = true; }
   } else if (e.type === 'ghost') {
-    if (e.state === 0) { if (e.x < G.cam.x + VW + 10) { e.state = 1; e.dir = -1; e.t = 0; } else return; }
-    e.x += e.dir * 0.85; e.y = e.base + Math.sin(e.t * 0.06) * 28;
+    if (e.state === 0) { if (e.x < G.cam.x + VW + 10) { e.state = 1; e.dir = -1; e.t = 0; e.cd = 70; } else return; }
+    e.x += e.dir * (e.warn > 0 ? 0.2 : 0.85); e.y = e.base + Math.sin(e.t * 0.06) * 28;
+    if (e.cd > 0) e.cd--;
+    if (e.cd === 0 && Math.abs(dx) < 150) { e.warn = 20; e.cd = 150 + rint(0, 60); e.shoot = true; }
+    if (e.shoot && e.warn === 0) { // slow ectoplasm orb aimed at her
+      e.shoot = false; const ang = Math.atan2((P.y + 10) - (e.y + 5), dx);
+      G.ents.push({ kind: 'orb', x: e.x + 1, y: e.y + 1, w: 8, h: 8, vx: Math.cos(ang) * 1.2, vy: Math.sin(ang) * 1.2, t: 0 }); Snd.sfx('cast');
+    }
     if (e.x < G.cam.x - 40 && e.t > 60) e.dead = true;
   }
   // player contact
@@ -3344,6 +3427,8 @@ function drawEnemy(g, e, cx, cy) {
   else if (e.type === 'bat') { const s = ART.s[(e.t >> (e.state ? 2 : 4)) & 1 ? 'batA' : 'batB']; sprAt(g, s, e, cx, cy, flip, f); }
   else if (e.type === 'ghost') { const s = ART.s.ghost; g.globalAlpha = 0.85; sprAt(g, s, e, cx, cy, flip, f); g.globalAlpha = 1; }
   if (jit) g.restore();
+  if (e.warn > 0 && (e.warn >> 1) & 1) { const wx = Math.round(e.x + e.w / 2 - cx), wy = Math.round(e.y - 9 - cy); g.fillStyle = '#05030a'; g.fillRect(wx - 2, wy - 1, 4, 9); g.fillStyle = '#ff3b3b'; g.fillRect(wx - 1, wy, 2, 4); g.fillRect(wx - 1, wy + 5, 2, 2); }
+  if (e.type === 'skeleton' && e.swing > 0 && e.swing < 10) { const sx = Math.round((e.dir > 0 ? e.x + e.w : e.x) - cx), sy = Math.round(e.y + 6 - cy), a0 = (10 - e.swing) / 10; g.fillStyle = '#e8e2cf'; pxLine(g, sx, sy, sx + e.dir * Math.round(12 * Math.cos(a0 - 1.2)), sy + Math.round(12 * Math.sin(a0 * 1.6 - 0.8)), 2); }
   if (e.showT > 0 && e.hp > 0 && e.hp < e.maxhp) { // small health bar while an enemy is being fought
     const w = 12, x = Math.round(e.x + e.w / 2 - w / 2 - cx), y = Math.round(e.y - 5 - cy);
     g.globalAlpha = Math.min(1, e.showT / 20); g.fillStyle = '#05030a'; g.fillRect(x - 1, y - 1, w + 2, 4);
@@ -3386,9 +3471,9 @@ function drawMplat(g, e, cx, cy) {
 /* ---------- boss: O Conde ---------- */
 /* boss roster: same body and AI, each with its own name, toughness, colour, minions and orb volleys */
 const BOSSES = {
-  conde: { name: 'O CONDE', hp: 220, hue: 0, minion: 'bat', orbs: 0 },
-  ceifador: { name: 'O CEIFADOR', hp: 300, hue: 170, minion: 'ghost', orbs: 1 },
-  rei: { name: 'ELIAS, O REI SOMBRIO', hp: 380, hue: 0, minion: 'bat', orbs: 2, sprite: true, freed: true }
+  conde: { name: 'O CONDE', hp: 220, hue: 0, minion: 'bat', orbs: 0, sprite: true },
+  ceifador: { name: 'O CEIFADOR', hp: 300, hue: 0, minion: 'ghost', orbs: 1, sprite: true },
+  rei: { name: 'ZEZINHO, O REI SOMBRIO', hp: 380, hue: 0, minion: 'bat', orbs: 2, sprite: true, freed: true }
 };
 function makeBoss(tx, ty) {
   const w = 22, h = 38, bt = (LV && LV.bossType) || 'conde', C = BOSSES[bt];
@@ -3467,7 +3552,7 @@ function updateBoss(b) {
   }
 }
 function drawBoss(g, b, cx, cy) {
-  if (BOSSES[b.bt].sprite && Dad.villain) { drawVillain(g, b, cx, cy); return; }
+  if (BOSSES[b.bt].sprite && Dad.bossArt) { drawVillain(g, b, cx, cy); return; }
   const s = ART.s.boss; const x = Math.round(b.x + b.w / 2 - s.w / 2 - cx), y = Math.round(b.y + b.h - s.h - cy);
   const flip = b.dir > 0; // sprite faces left by default
   g.globalAlpha = clamp(b.fade, 0.05, 1);
@@ -3634,7 +3719,7 @@ function level3() {
   b.rect(111, 0, 7, 9, 'h').rect(111, 9, 7, 3, 'h');
   b.en('boss', 106, 8);
   b.door(108, 8, true);
-  b.talk = [{ who: 'LIVIA', text: 'Vou te bater até você parar de ser besta! Vem no boxe, vem!' }, { who: 'LIVIA', text: 'Aguenta firme, Elias. Eu vou te libertar!' }];
+  b.talk = [{ who: 'LIVIA', text: 'Vou te bater até você parar de ser besta! Vem no boxe, vem!' }, { who: 'LIVIA', text: 'Aguenta firme, Zezinho. Eu vou te libertar!' }];
   return b;
 }
 
@@ -3661,7 +3746,7 @@ function level4() {
   b.candle(103, 8, 'heart', 'm_bolt').candle(116, 8, 'heart');
   b.rect(130, 0, 7, 9, 'd').rect(130, 9, 7, 3, 'd');
   b.bossType = 'ceifador'; b.en('boss', 125, 8); b.door(127, 8, true);
-  b.talk = [{ who: 'LIVIA', text: 'Tá achando que você é quem pra ficar no meu caminho, seu jão?' }, { who: 'LIVIA', text: 'Segura só mais um pouco, Elias. Tô chegando.' }];
+  b.talk = [{ who: 'LIVIA', text: 'Tá achando que você é quem pra ficar no meu caminho, seu jão?' }, { who: 'LIVIA', text: 'Segura só mais um pouco, Zezinho. Tô chegando.' }];
   return b;
 }
 
@@ -3691,13 +3776,13 @@ function level5() {
   b.rect(138, 0, 7, 9, 'h').rect(138, 9, 7, 3, 'h');
   b.bossType = 'rei'; b.en('boss', 133, 8); b.door(135, 8, true);
   b.talk = [
-    { who: 'ELIAS', text: '...Por que você não desistiu? Eu era só sombra.' },
-    { who: 'LIVIA', text: 'Porque eu conheço o homem por trás dessa coroa. Volta pra mim, Elias.' },
-    { who: 'ELIAS', text: 'Esse calor... a escuridão está indo embora. Eu consigo te ver de novo.' },
+    { who: 'ZEZINHO', text: '...Por que você não desistiu? Eu era só sombra.' },
+    { who: 'LIVIA', text: 'Porque eu conheço o homem por trás dessa coroa. Volta pra mim, Zezinho.' },
+    { who: 'ZEZINHO', text: 'Esse calor... a escuridão está indo embora. Eu consigo te ver de novo.' },
     { who: 'LIVIA', text: 'O amor sempre vence a noite. Você está livre.' },
-    { who: 'ELIAS', text: 'Você me libertou. Obrigado por nunca soltar a minha mão.' },
+    { who: 'ZEZINHO', text: 'Você me libertou. Obrigado por nunca soltar a minha mão.' },
     { who: 'LIVIA', text: 'Agora levanta daí, que eu vou te levar pra jogar sinuca.' },
-    { who: 'ELIAS', text: 'Sinuca? Fechado. Só não vale me humilhar de novo.' }
+    { who: 'ZEZINHO', text: 'Sinuca? Fechado. Só não vale me humilhar de novo.' }
   ];
   return b;
 }
@@ -4349,7 +4434,7 @@ function drawEnding(g) {
   if (IMG.portrait) g.drawImage(IMG.portrait, 6, 54);
   text(g, 'O CASTELO', 232, 14, '#ffd60a', 'center', '#5a1a14', 2);
   text(g, 'ESTA LIVRE', 232, 34, '#ffd60a', 'center', '#5a1a14', 2);
-  text(g, 'E LIBERTOU ELIAS COM AMOR.', 232, 62, '#f2ecd9', 'center', '#000');
+  text(g, 'E LIBERTOU ZEZINHO COM AMOR.', 232, 62, '#f2ecd9', 'center', '#000');
   text(g, 'GEMAS ' + G.gems, 232, 86, '#f2ecd9', 'center');
   text(g, 'PONTOS ' + String(G.score).padStart(8, '0'), 232, 100, '#ffffff', 'center');
   text(g, (UI.newHi ? 'NOVO RECORDE!' : 'RECORDE ' + String(Store.data.hi).padStart(8, '0')), 232, 114, UI.newHi ? '#ffd60a' : '#8f8aa6', 'center');
