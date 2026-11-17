@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-l6sRqTZcTAsttVBcJJk+ucZnNZRo3Z10k40F5xKbmL4='; style-src 'sha256-qaCethuuC/B/M87Firj2JJiqlqitVpMfUst+Et+LX0Q='; img-src data:; font-src data:; connect-src 'none'; media-src 'none'; frame-src 'none'; object-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-sw85yikcONoUKk4x+HZxxDZFiy1S1fRc5iVLQ6lHTVE='; style-src 'sha256-qaCethuuC/B/M87Firj2JJiqlqitVpMfUst+Et+LX0Q='; img-src data:; font-src data:; connect-src 'none'; media-src 'none'; frame-src 'none'; object-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="color-scheme" content="dark">
 <meta name="description" content="Noite no Castelo: jogo de plataforma 2D em pixel art, gratuito, sem coleta de dados.">
@@ -1808,7 +1808,7 @@ const Inv = {
       lvl,
       for: 5 + lvl + sum('for'), con: 4 + lvl + sum('con'), int: 4 + lvl + sum('int'), sor: 4 + (lvl >> 1) + sum('sor'),
       def: 0, atk: 0, maxhp: 0, maxmp: 0, spd: 1 + parts.filter(it => it.slot !== 'main').reduce((a, it) => a + (it.spd || 0), 0), jump: 1 + sum('jump'), regen: 0, kbRes: sum('kbRes'),
-      dj: false, magnet: false, lifesteal: false
+      dj: true, magnet: false, lifesteal: false
     };
     st.def = Math.round(sum('def') + st.con * 0.6);
     const w = ITEMS[E.main] || ITEMS.fists;
