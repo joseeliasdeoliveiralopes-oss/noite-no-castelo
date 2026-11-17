@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-R5qc49FEdfVQke8HcK+l6ccTaTDXvwyX5MjuCrB6SGg='; style-src 'sha256-TMovdRywALDbetpTRo0VehT0NeXv2ecfWpy+4wUxovo='; img-src data:; font-src data:; connect-src 'none'; media-src 'none'; frame-src 'none'; object-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-L1+CoYgTFjLpqXZ8VOGmtByavfauK5vEkntcQ6Dd320='; style-src 'sha256-qaCethuuC/B/M87Firj2JJiqlqitVpMfUst+Et+LX0Q='; img-src data:; font-src data:; connect-src 'none'; media-src 'none'; frame-src 'none'; object-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="color-scheme" content="dark">
 <meta name="description" content="Noite no Castelo: jogo de plataforma 2D em pixel art, gratuito, sem coleta de dados.">
@@ -199,6 +199,16 @@ body.touch #touch #t-full[hidden]{display:none}
 }
 body.touch #touch .acts #t-whip{grid-column:auto;width:76px;min-width:0}
 @media (orientation:landscape) and (max-height:560px){body.touch #touch .acts #t-whip{width:70px}}
+
+/* jump v2: biggest button, bottom-right corner, generous invisible hit area */
+body.touch #touch .acts{grid-template-columns:auto auto;grid-template-areas:"sub spec" "atk jump";align-items:end}
+body.touch #touch #t-sub{grid-area:sub}body.touch #touch #t-spec{grid-area:spec}
+body.touch #touch .acts #t-whip{grid-area:atk;align-self:start;margin-bottom:26px}
+body.touch #touch #t-jump{grid-area:jump;width:92px;height:92px;font-size:9px;border:3px solid #ffd60a;color:#fff;background:radial-gradient(circle at 50% 35%,rgba(255,214,10,.35),rgba(20,16,42,.85) 70%);position:relative}
+body.touch #touch #t-jump::before{content:"";position:absolute;inset:-16px;border-radius:50%}
+body.touch #touch #t-jump::after{content:"\25B2";position:absolute;left:0;right:0;top:16px;font-size:14px;color:#ffd60a}
+body.touch #touch #t-jump.on{background:rgba(255,214,10,.55)}
+@media (orientation:landscape) and (max-height:560px){body.touch #touch #t-jump{width:86px;height:86px;background:radial-gradient(circle at 50% 35%,rgba(255,214,10,.3),rgba(14,10,30,.5) 70%)}}
 </style>
 </head>
 <body>
@@ -1321,9 +1331,11 @@ const Input = {
     addEventListener('keyup', e => { const a = this.map[e.code]; if (a) this.kb[a] = false; });
     addEventListener('blur', () => { this.kb = {}; this.touch = {}; });
   },
+  hold: {},
+  /* a tap shorter than one frame still counts: `hold` keeps the action down for a few frames (jump: long enough for a real hop) */
   poll() {
     this.prev = Object.assign({}, this.down);
-    for (const k in this.down) this.down[k] = !!(this.kb[k] || this.touch[k]);
+    for (const k in this.down) { const h = this.hold[k] > 0; if (h) this.hold[k]--; this.down[k] = !!(this.kb[k] || this.touch[k] || h); }
   },
   pressed(a) { return this.down[a] && !this.prev[a]; }
 };
@@ -4431,7 +4443,7 @@ function closePrivacy() { UI.modal = false; document.getElementById('priv').hidd
 function showConsentBanner() { const b = document.getElementById('consent'); if (b && !Store.data.consent) b.hidden = false; }
 function touchBtn(id, action) {
   const el = document.getElementById(id); if (!el) return; const ptrs = new Set();
-  const down = e => { e.preventDefault(); ptrs.add(e.pointerId); Input.touch[action] = true; Snd.unlock(); try { el.setPointerCapture(e.pointerId); } catch (x) { /* ignore */ } el.classList.add('on'); };
+  const down = e => { e.preventDefault(); ptrs.add(e.pointerId); Input.touch[action] = true; Input.hold[action] = action === 'jump' ? 9 : 2; if (navigator.vibrate && action === 'jump') try { navigator.vibrate(8); } catch (x) { /* ignore */ } Snd.unlock(); try { el.setPointerCapture(e.pointerId); } catch (x) { /* ignore */ } el.classList.add('on'); };
   const up = e => { ptrs.delete(e.pointerId); if (!ptrs.size) { Input.touch[action] = false; el.classList.remove('on'); } };
   el.addEventListener('pointerdown', down); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); el.addEventListener('lostpointercapture', up);
   el.addEventListener('contextmenu', e => e.preventDefault());
