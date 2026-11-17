@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-L1+CoYgTFjLpqXZ8VOGmtByavfauK5vEkntcQ6Dd320='; style-src 'sha256-qaCethuuC/B/M87Firj2JJiqlqitVpMfUst+Et+LX0Q='; img-src data:; font-src data:; connect-src 'none'; media-src 'none'; frame-src 'none'; object-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-l6sRqTZcTAsttVBcJJk+ucZnNZRo3Z10k40F5xKbmL4='; style-src 'sha256-qaCethuuC/B/M87Firj2JJiqlqitVpMfUst+Et+LX0Q='; img-src data:; font-src data:; connect-src 'none'; media-src 'none'; frame-src 'none'; object-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="color-scheme" content="dark">
 <meta name="description" content="Noite no Castelo: jogo de plataforma 2D em pixel art, gratuito, sem coleta de dados.">
@@ -1674,7 +1674,7 @@ const Snd = (() => {
 /* All tuning numbers live here. Change them freely: the whole game reads from this table. */
 const CFG = {
   hpPerHeart: 20,            // one "heart" of the old HUD = 20 hit points
-  hpBase: 100, hpPerLevel: 10,
+  hpBase: 10000, hpPerLevel: 10,   // 10.000 de vida: modo imortal
   mpBase: 36, mpPerInt: 4,
   mpRegenFrames: 26,         // frames per +1 MP when idle (lower with INT)
   mpPerGem: 1, mpPerKill: 1,
@@ -3163,7 +3163,11 @@ function updatePlayer() {
   // spikes
   const tx0 = Math.floor((P.x + 1) / TS), tx1 = Math.floor((P.x + P.w - 2) / TS), ty = Math.floor((P.y + P.h - 3) / TS);
   for (let tx = tx0; tx <= tx1; tx++) if (tileAt(tx, ty) === '^' && P.y + P.h > ty * TS + 6) { hurtPlayer(tx * TS + 8); if (P.hp > 0) { P.vy = -4; } }
-  if (P.y > LV.h * TS + 30) killPlayer(true);
+  if (P.onGround && !P.ride) { P.safeX = P.x; P.safeY = P.y; }
+  if (P.y > LV.h * TS + 30) { // fell into a pit: back to the last solid ground instead of dying
+    P.x = P.safeX != null ? P.safeX - P.dir * 8 : P.x; P.y = (P.safeY != null ? P.safeY : 0) - 4; P.vx = 0; P.vy = 0; P.inv = 90; P.hp = Math.max(1, P.hp - 50); P.atk = null;
+    Snd.sfx('hurt'); G.msg = 'QUASE!'; G.msgT = 50;
+  }
   // animation
   if (Math.abs(P.vx) > 0.15 && P.onGround) P.anim += 0.08 + Math.abs(P.vx) * 0.07; else if (P.onGround) P.anim = 0;
 }
@@ -4182,7 +4186,7 @@ function updatePlay() {
   if (G.shake > 0) G.shake *= 0.86; if (G.shake < 0.2) G.shake = 0;
   if (G.msgT > 0) G.msgT--;
   // clock
-  if (!P.dead && !P.win && !(LV.arena && G.boss)) { G.timeAcc++; if (G.timeAcc >= 60) { G.timeAcc = 0; G.time--; if (G.time === 30) { Snd.sfx('pause'); G.msg = 'POUCO TEMPO!'; G.msgT = 90; } if (G.time <= 0) killPlayer(); } }
+  if (!P.dead && !P.win && !(LV.arena && G.boss)) { G.timeAcc++; if (G.timeAcc >= 60) { G.timeAcc = 0; G.time--; if (G.time === 30) { Snd.sfx('pause'); G.msg = 'POUCO TEMPO!'; G.msgT = 90; } if (G.time <= 0) { G.time = 120; G.msg = 'MAIS TEMPO!'; G.msgT = 90; Snd.sfx('life'); } } }
   // death
   if (P.dead && P.deadT > 120) {
     G.lives--;
